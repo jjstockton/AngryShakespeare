@@ -1,0 +1,12 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'shakespeare.Main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.twitter4j', name: 'twitter4j-core', version: '4.0.4'
+}
