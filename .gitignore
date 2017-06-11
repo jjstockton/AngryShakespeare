@@ -1,4 +1,4 @@
-config.properties
 build
-dist
-nbproject/private
+.idea
+.gradle
+*.iml
