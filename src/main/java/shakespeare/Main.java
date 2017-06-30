@@ -1,65 +1,37 @@
 package shakespeare;
 
-import twitter4j.ResponseList;
-import twitter4j.Status;
-import twitter4j.StatusUpdate;
+import twitter4j.TwitterException;
 
-import java.util.Date;
+import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static shakespeare.Bot.*;
 
 public class Main {
 
     public static void main(String[] args) {
 
+        boolean isRealRun;
+        if(args.length == 1) {
+            isRealRun = Boolean.parseBoolean(args[0]);
+        } else {
+            throw new RuntimeException("Unable to parse arguments: expected 1 argument but got " + args.length + ".");
+        }
+
+        if(!isRealRun) {
+            System.out.println("Running as test.");
+        }
+
         while (true) {
 
+            Bot bot = new Bot();
+
             try {
-                Bot bot = new Bot();
 
-                // Favourite recent mentions
-                System.out.println("Favouriting recent mentions.");
-                bot.favouriteRecentMentions();
+                bot.run(isRealRun);
 
-                System.out.println("Attempting to tweet...");
-                for (Status targetTweet : bot.getTweets()) {
-
-                    // Check that it's been at least an hour since the last tweet
-                    Date currentTime = new Date();
-                    long timeSinceLastTweet = currentTime.getTime() - bot.getLastTweet().getCreatedAt().getTime();
-                    if (timeSinceLastTweet < 1 * 60 * 60 * 1000) {
-                        System.out.println("Minimum elapsed tweet time not reached.");
-                        break;
-                    }
-
-                    // Apply filters
-                    if (!validTweet(targetTweet)) {
-                        System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": not valid.");
-                        continue;
-                    }
-
-                    // Check that we haven't tweeted at this user recently
-                    ResponseList<Status> myRecentTweets = bot.getRecentTweets(100);
-                    if(tweetedAtUser(myRecentTweets, targetTweet.getUser().getId())) {
-                        System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": recently tweeted at " +
-                                "user @" + targetTweet.getUser().getScreenName() + ".");
-                        continue;
-                    }
-
-                    String tweetText = null;
-                    while (tweetText == null || tweetText.length() > 140) {
-                        String insult = bot.getInsult();
-                        tweetText = "@" + targetTweet.getUser().getScreenName() + " " + insult;
-                    }
-
-                    StatusUpdate status = new StatusUpdate(tweetText);
-
-                    if (bot.reply(status, targetTweet)) {
-                        System.out.println("Successfully tweeted at @" + targetTweet.getUser().getScreenName());
-                        break;
-                    }
+                if(!isRealRun) {
+                    return;
                 }
 
                 // Sleep the bot for a random time chosen from an exponential distribution, making sure to wait at least
@@ -75,10 +47,9 @@ public class Main {
                 TimeUnit.MILLISECONDS.sleep(Math.round(sleepHrs * 60 * 60 * 1000));
 
             } catch (InterruptedException e) {
-                System.err.println(e);
-                throw new RuntimeException();
-            } catch (Exception e) {
-                System.err.println(e);
+                throw new RuntimeException(e);
+            } catch (TwitterException | IOException e) {
+                System.err.println("Fatal error: " + e);
                 // If we're in here then we've probably hit a fatal error
                 // Notify and sleep for 24 hours
                 // TODO Send email
@@ -86,8 +57,7 @@ public class Main {
                     System.out.println("Sleeping for 24 hrs.");
                     TimeUnit.HOURS.sleep(24);
                 } catch (InterruptedException ie) {
-                    System.err.println(e);
-                    throw new RuntimeException(e);
+                    throw new RuntimeException(ie);
                 }
             }
         }

@@ -12,6 +12,11 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+test {
+    dependsOn cleanTest
+    testLogging.showStandardStreams = true
+}
+
 task fatJar(type: Jar) {
     manifest {
         attributes ('Main-Class': 'shakespeare.Main')

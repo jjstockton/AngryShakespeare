@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import twitter4j.Status;
@@ -52,6 +53,56 @@ public class Bot {
         }
     }
 
+    public void run(boolean isRealRun) throws TwitterException, IOException {
+
+        // Favourite recent mentions
+        System.out.println("Favouriting recent mentions...");
+        favouriteRecentMentions();
+
+        System.out.println("Attempting to tweet...");
+        for (Status targetTweet : getTweets()) {
+
+            // Check that it's been at least an hour since the last tweet
+            Date currentTime = new Date();
+            long timeSinceLastTweet = currentTime.getTime() - getLastTweet().getCreatedAt().getTime();
+            if (timeSinceLastTweet < 1 * 60 * 60 * 1000) {
+                System.out.println("Minimum elapsed tweet time not reached.");
+                break;
+            }
+
+            // Apply filters
+            if (!validTweet(targetTweet)) {
+                System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": not valid.");
+                continue;
+            }
+
+            // Check that we haven't tweeted at this user recently
+            ResponseList<Status> myRecentTweets = getRecentTweets(100);
+            if(tweetedAtUser(myRecentTweets, targetTweet.getUser().getId())) {
+                System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": recently tweeted at " +
+                        "user @" + targetTweet.getUser().getScreenName() + ".");
+                continue;
+            }
+
+            String tweetText = null;
+            while (tweetText == null || tweetText.length() > 140) {
+                String insult = getInsult();
+                tweetText = "@" + targetTweet.getUser().getScreenName() + " " + insult;
+            }
+
+            StatusUpdate status = new StatusUpdate(tweetText);
+
+            if(!isRealRun) {
+                break;
+            }
+
+            if (reply(status, targetTweet)) {
+                System.out.println("Successfully tweeted at @" + targetTweet.getUser().getScreenName());
+                break;
+            }
+        }
+    }
+
     public void favouriteRecentMentions() throws TwitterException {
 
         ResponseList<Status> mentions;
@@ -61,15 +112,21 @@ public class Bot {
             throw new TwitterException("Failed to get mentions timeline! " + e);
         }
 
+        int count = 0;
         for (Status m : mentions) {
             try {
-                twitter.createFavorite(m.getId());
+                if(!m.isFavorited()) {
+                    twitter.createFavorite(m.getId());
+                    count++;
+                }
             } catch(TwitterException e) {
                 // There's not much we want to do if creating a favourite fails
                 // Sometimes this happens if the user blocked AngryShakespeare :(
                 System.err.println("Couldn't favourite tweet: '" + m.getId() + "'. " + e);
             }
         }
+
+        System.out.println("Favourited " + count + " tweets.");
     }
 
     public List<Status> getTweets() throws TwitterException {
@@ -166,7 +223,7 @@ public class Bot {
         return false;
     }
 
-    public boolean reply(StatusUpdate tweet, Status targetTweet) {
+    private boolean reply(StatusUpdate tweet, Status targetTweet) {
 
         tweet.setInReplyToStatusId(targetTweet.getId());
         try {
