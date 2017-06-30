@@ -1,13 +1,16 @@
 import org.junit.Before;
 import org.junit.Test;
 import shakespeare.Bot;
+import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.StatusUpdate;
 import twitter4j.TwitterException;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
+import static shakespeare.Bot.tweetedAtUser;
 import static shakespeare.Bot.validTweet;
 
 // Mostly just acceptance tests
@@ -21,7 +24,7 @@ public class TestShakespeare {
     }
 
     @Test
-    public void TestShakespeare() throws TwitterException {
+    public void TestShakespeare() throws TwitterException, IOException {
 
         bot.favouriteRecentMentions();
 
@@ -31,7 +34,10 @@ public class TestShakespeare {
                 continue;
             }
 
-            if(bot.getLastTweet().getInReplyToScreenName().equals(targetTweet.getUser().getScreenName())) {
+            ResponseList<Status> myRecentTweets = bot.getRecentTweets(100);
+            if(tweetedAtUser(myRecentTweets, targetTweet.getUser().getId())) {
+                System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": recently tweeted at " +
+                        "user @" + targetTweet.getUser().getScreenName() + ".");
                 continue;
             }
 

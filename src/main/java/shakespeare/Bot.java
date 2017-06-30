@@ -52,13 +52,13 @@ public class Bot {
         }
     }
 
-    public void favouriteRecentMentions() {
+    public void favouriteRecentMentions() throws TwitterException {
 
         ResponseList<Status> mentions;
         try {
             mentions = twitter.getMentionsTimeline();
         } catch (TwitterException e) {
-            throw new RuntimeException("Failed to get mentions timeline! " + e);
+            throw new TwitterException("Failed to get mentions timeline! " + e);
         }
 
         for (Status m : mentions) {
@@ -72,18 +72,14 @@ public class Bot {
         }
     }
 
-    public List<Status> getTweets() {
+    public List<Status> getTweets() throws TwitterException {
 
         List<Status> tweets;
 
         Query query = new Query(searchFilter());
         query.count(100);
 
-        try {
-            tweets = twitter.search(query).getTweets();
-        } catch(TwitterException e) {
-            throw new RuntimeException(e);
-        }
+        tweets = twitter.search(query).getTweets();
 
         return tweets;
     }
@@ -108,29 +104,24 @@ public class Bot {
 
     }
 
-    public String getInsult() {
+    public String getInsult() throws IOException {
         String insult = null;
-        try {
 
-            URLConnection con = insultUrl.openConnection();
-            InputStream is = con.getInputStream();
+        URLConnection con = insultUrl.openConnection();
+        InputStream is = con.getInputStream();
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            String line;
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String line;
 
-            // TODO: Refactor this to be less hacky now that I know a little more about HTML parsing
-            while ((line = br.readLine()) != null) {
-                if (line.contains("/font")) {
-                    insult = line.replace("</font>", "")
-                            .replace("[", "")
-                            .replace("]", "")
-                            .toLowerCase()
-                            .replace("<br>", "\n");
-                }
+        // TODO: Refactor this to be less hacky now that I know a little more about HTML parsing
+        while ((line = br.readLine()) != null) {
+            if (line.contains("/font")) {
+                insult = line.replace("</font>", "")
+                        .replace("[", "")
+                        .replace("]", "")
+                        .toLowerCase()
+                        .replace("<br>", "\n");
             }
-
-        } catch(IOException e) {
-            throw new RuntimeException(e);
         }
 
         return insult;
@@ -148,12 +139,40 @@ public class Bot {
         return twitter.getUserTimeline().get(0);
     }
 
+    public ResponseList<Status> getRecentTweets(int maxCount) throws TwitterException {
+        Paging p = new Paging();
+        int count = maxCount;
+
+        while(count > 0) {
+            try {
+                p.count(count);
+                return twitter.getUserTimeline(p);
+            } catch (TwitterException e) {
+                count--;
+            }
+        }
+
+        throw new TwitterException("Couldn't fetch user timeline!");
+    }
+
+    public static boolean tweetedAtUser(ResponseList<Status> tweets, long userId) {
+
+        for(Status tweet : tweets) {
+            if(tweet.getInReplyToUserId() == userId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean reply(StatusUpdate tweet, Status targetTweet) {
 
         tweet.setInReplyToStatusId(targetTweet.getId());
         try {
             twitter.updateStatus(tweet);
         } catch(TwitterException e) {
+            System.err.println("Failed when tweeting response to ID: '" + targetTweet.getId() + "'. " + e);
             return false;
         }
 

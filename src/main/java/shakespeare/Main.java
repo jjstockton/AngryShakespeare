@@ -1,5 +1,6 @@
 package shakespeare;
 
+import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.StatusUpdate;
 
@@ -40,8 +41,10 @@ public class Main {
                     }
 
                     // Check that we haven't tweeted at this user recently
-                    if (bot.getLastTweet().getInReplyToScreenName().equals(targetTweet.getUser().getScreenName())) {
-                        System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": recently tweeted at this user");
+                    ResponseList<Status> myRecentTweets = bot.getRecentTweets(100);
+                    if(tweetedAtUser(myRecentTweets, targetTweet.getUser().getId())) {
+                        System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": recently tweeted at " +
+                                "user @" + targetTweet.getUser().getScreenName() + ".");
                         continue;
                     }
 
