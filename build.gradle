@@ -16,7 +16,7 @@ task fatJar(type: Jar) {
     manifest {
         attributes ('Main-Class': 'shakespeare.Main')
     }
-    baseName = project.name + '-all'
+    baseName = 'AngryShakespeare-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
