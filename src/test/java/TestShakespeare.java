@@ -1,3 +1,4 @@
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import shakespeare.Bot;
@@ -11,6 +12,7 @@ import static org.junit.Assert.*;
 import static shakespeare.Bot.getInsult;
 import static shakespeare.Bot.validTweet;
 
+// Mostly just acceptance tests
 public class TestShakespeare {
 
     Bot bot;
