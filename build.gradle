@@ -27,6 +27,6 @@ task fatJar(type: Jar) {
 }
 
 task stage {
-    dependsOn build
+    dependsOn test
     dependsOn fatJar
 }
