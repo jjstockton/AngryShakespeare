@@ -3,6 +3,7 @@ package shakespeare;
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.io.IOException;
@@ -18,7 +19,8 @@ import twitter4j.StatusUpdate;
 
 public class Bot {
 
-    Twitter twitter;
+    private Twitter twitter;
+    private URL insultUrl;
 
     public Bot() {
         String consumerKey = System.getenv("ConsumerKey");
@@ -43,17 +45,29 @@ public class Bot {
 
         this.twitter = tf.getInstance();
 
+        try {
+            this.insultUrl = new URL(System.getenv("InsultUrl"));
+        } catch(MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void favouriteRecentMentions() throws TwitterException {
-        ResponseList<Status> mentions = twitter.getMentionsTimeline();
+    public void favouriteRecentMentions() {
+
+        ResponseList<Status> mentions;
+        try {
+            mentions = twitter.getMentionsTimeline();
+        } catch (TwitterException e) {
+            throw new RuntimeException("Failed to get mentions timeline! " + e);
+        }
 
         for (Status m : mentions) {
             try {
                 twitter.createFavorite(m.getId());
             } catch(TwitterException e) {
-                // There's not much we can do if creating a favourite fails
+                // There's not much we want to do if creating a favourite fails
                 // Sometimes this happens if the user blocked AngryShakespeare :(
+                System.err.println("Couldn't favourite tweet: '" + m.getId() + "'. " + e);
             }
         }
     }
@@ -94,17 +108,17 @@ public class Bot {
 
     }
 
-    public static String getInsult() {
+    public String getInsult() {
         String insult = null;
         try {
-            URL url = new URL("http://www.pangloss.com/seidel/Shaker/index.html");
 
-            URLConnection con = url.openConnection();
+            URLConnection con = insultUrl.openConnection();
             InputStream is = con.getInputStream();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String line;
 
+            // TODO: Refactor this to be less hacky now that I know a little more about HTML parsing
             while ((line = br.readLine()) != null) {
                 if (line.contains("/font")) {
                     insult = line.replace("</font>", "")

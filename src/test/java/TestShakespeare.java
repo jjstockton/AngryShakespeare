@@ -1,4 +1,3 @@
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import shakespeare.Bot;
@@ -9,7 +8,6 @@ import twitter4j.TwitterException;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
-import static shakespeare.Bot.getInsult;
 import static shakespeare.Bot.validTweet;
 
 // Mostly just acceptance tests
@@ -40,7 +38,7 @@ public class TestShakespeare {
             String tweetText = null;
 
             while(tweetText == null || tweetText.length() > 140) {
-                String insult = getInsult();
+                String insult = bot.getInsult();
 
                 assertNotNull(insult);
                 assertFalse(insult.isEmpty());

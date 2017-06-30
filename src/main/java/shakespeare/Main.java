@@ -2,7 +2,6 @@ package shakespeare;
 
 import twitter4j.Status;
 import twitter4j.StatusUpdate;
-import twitter4j.TwitterException;
 
 import java.util.Date;
 import java.util.Random;
@@ -20,12 +19,8 @@ public class Main {
                 Bot bot = new Bot();
 
                 // Favourite recent mentions
-                try {
-                    System.out.println("Favouriting recent mentions.");
-                    bot.favouriteRecentMentions();
-                } catch (TwitterException e) {
-                    System.err.println(e.getMessage());
-                }
+                System.out.println("Favouriting recent mentions.");
+                bot.favouriteRecentMentions();
 
                 System.out.println("Attempting to tweet...");
                 for (Status targetTweet : bot.getTweets()) {
@@ -38,20 +33,21 @@ public class Main {
                         break;
                     }
 
+                    // Apply filters
                     if (!validTweet(targetTweet)) {
                         System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": not valid.");
                         continue;
                     }
 
+                    // Check that we haven't tweeted at this user recently
                     if (bot.getLastTweet().getInReplyToScreenName().equals(targetTweet.getUser().getScreenName())) {
                         System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": recently tweeted at this user");
                         continue;
                     }
 
                     String tweetText = null;
-
                     while (tweetText == null || tweetText.length() > 140) {
-                        String insult = getInsult();
+                        String insult = bot.getInsult();
                         tweetText = "@" + targetTweet.getUser().getScreenName() + " " + insult;
                     }
 
@@ -73,22 +69,21 @@ public class Main {
                 }
 
                 System.out.println("Sleeping for " + sleepHrs + " hrs.");
-
                 TimeUnit.MILLISECONDS.sleep(Math.round(sleepHrs * 60 * 60 * 1000));
 
             } catch (InterruptedException e) {
-                System.err.println(e.getMessage());
+                System.err.println(e);
                 throw new RuntimeException();
             } catch (Exception e) {
-                System.err.println(e.getMessage());
+                System.err.println(e);
                 // If we're in here then we've probably hit a fatal error
                 // Notify and sleep for 24 hours
                 // TODO Send email
                 try {
-                    System.out.println("Sleeping for 24 hrs");
+                    System.out.println("Sleeping for 24 hrs.");
                     TimeUnit.HOURS.sleep(24);
                 } catch (InterruptedException ie) {
-                    System.err.println(e.getMessage());
+                    System.err.println(e);
                     throw new RuntimeException(e);
                 }
             }
