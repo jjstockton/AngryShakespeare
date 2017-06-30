@@ -49,7 +49,7 @@ public class Bot {
         try {
             this.insultUrl = new URL(System.getenv("InsultUrl"));
         } catch(MalformedURLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Bad insult url: " + e);
         }
     }
 
@@ -66,13 +66,13 @@ public class Bot {
             Date currentTime = new Date();
             long timeSinceLastTweet = currentTime.getTime() - getLastTweet().getCreatedAt().getTime();
             if (timeSinceLastTweet < 1 * 60 * 60 * 1000) {
-                System.out.println("Minimum elapsed tweet time not reached.");
+                System.out.println("Minimum tweet wait time not elapsed.");
                 break;
             }
 
             // Apply filters
             if (!validTweet(targetTweet)) {
-                System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": not valid.");
+                System.out.println("Skipping tweet with ID " + targetTweet.getId() + ": tweet not valid.");
                 continue;
             }
 
@@ -93,7 +93,8 @@ public class Bot {
             StatusUpdate status = new StatusUpdate(tweetText);
 
             if(!isRealRun) {
-                break;
+                System.out.println("Exiting test run.");
+                return;
             }
 
             if (reply(status, targetTweet)) {

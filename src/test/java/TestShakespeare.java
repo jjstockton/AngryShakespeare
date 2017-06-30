@@ -25,7 +25,7 @@ public class TestShakespeare {
 
         assertNotNull(insult);
         assertFalse(insult.isEmpty());
-        assertTrue(Pattern.compile("[^<>=]+").matcher(insult).matches());
+        assertTrue(Pattern.compile("[^<>=]+").matcher(insult).matches()); // Check that no HTML sneaked in
     }
 
     @Test
