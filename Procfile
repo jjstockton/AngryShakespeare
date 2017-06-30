@@ -1,0 +1,1 @@
+worker: gradle run
