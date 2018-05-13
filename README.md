@@ -3,8 +3,8 @@
 Angry Shakespeare is a Twitter bot that responds to users who insult Shakespeare.
 
 Examples:
-<img src="/../screenshots/img/p1.jpg?raw=true" alt="alt text" width="100">
-<img src="/../screenshots/img/p2.jpg?raw=true" alt="alt text" width="100">
+<img src="/../screenshots/img/p1.jpg?raw=true" alt="alt text" width="200">
+<img src="/../screenshots/img/p2.jpg?raw=true" alt="alt text" width="200">
 
 Insults are sourced from http://www.pangloss.com/seidel/Shaker/index.html and are a mix of real insults from Shakespeare plays and artificially generated "Shakespearean" insults.
 
